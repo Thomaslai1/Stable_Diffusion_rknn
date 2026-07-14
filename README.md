@@ -87,3 +87,21 @@ Conversion, accuracy and performance reports will be added during validation.
 ## 11. Limitations
 
 The initial example does not support dynamic resolution, batch inference, ControlNet, Img2Img, Inpainting or dynamic LoRA switching.
+# 任意 Prompt 阶段
+
+Text Encoder 的输入是 tokenizer 生成的 `1×77` 个 token id，输出是 UNet 使用的 `1×77×768` prompt embedding。
+
+先在电脑上生成测试输入：
+
+```bash
+python python/tokenize_prompt.py "a photo of a dog" --output_dir testdata/prompt
+```
+
+再将 Text Encoder 转换为 RKNN：
+
+```bash
+python python/export_text_encoder_onnx.py --output model/text_encoder.onnx
+python python/convert.py model/text_encoder.onnx rk3588 fp model/text_encoder_fp.rknn
+```
+
+Android Demo 的输入是 `input_ids.bin`，输出是 `prompt_embeds.bin`。该 embedding 可以直接替换固定 prompt Demo 使用的 `prompt_embeds.bin`。
