@@ -105,3 +105,17 @@ python python/convert.py model/text_encoder.onnx rk3588 fp model/text_encoder_fp
 ```
 
 Android Demo 的输入是 `input_ids.bin`，输出是 `prompt_embeds.bin`。该 embedding 可以直接替换固定 prompt Demo 使用的 `prompt_embeds.bin`。
+
+## 一键输入 Prompt 生图
+
+确认板端已经准备好 `stable_diffusion` 目录，并且本地已经编译 `build/text_encoder_rknn_demo`，然后在 PowerShell 执行：
+
+```powershell
+.\scripts\generate.ps1 "a photo of a dog"
+```
+
+默认输出：`results/generated.png`。也可以指定输出文件：
+
+```powershell
+.\scripts\generate.ps1 "a golden robot in a library" -Output results/robot.png
+```
