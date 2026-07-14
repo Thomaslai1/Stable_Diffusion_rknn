@@ -8,3 +8,5 @@ reports/*
 # Local runtime libraries used only for board-side builds.
 cpp/*.so
 cpp/third_party/*.so
+
+fixed_prompt/*
