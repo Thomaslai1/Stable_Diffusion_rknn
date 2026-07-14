@@ -1,0 +1,10 @@
+# Generated model artifacts and external ONNX data.
+model/*
+testdata/*
+build/*
+results/*
+reports/*
+
+# Local runtime libraries used only for board-side builds.
+cpp/*.so
+cpp/third_party/*.so

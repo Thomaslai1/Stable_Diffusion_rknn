@@ -1,0 +1,11 @@
+diffusers>=0.35,<0.38
+transformers>=4.45,<5
+accelerate>=1.0,<2
+peft>=0.13,<1
+safetensors>=0.4,<1
+Pillow>=10,<12
+numpy>=1.26,<3
+torch>=2.4,<3
+onnx>=1.16,<2
+onnxruntime>=1.18,<2
+onnxsim>=0.4.36,<1
