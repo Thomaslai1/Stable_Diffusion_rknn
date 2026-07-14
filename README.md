@@ -1,121 +1,175 @@
 # stable_diffusion
 
+Stable Diffusion 1.5 + LCM-LoRA on RK3588 with RKNN. The current Android demo supports arbitrary text prompts and fixed 512×512 image generation in four steps.
+
 ## Table of contents
 
 - [1. Description](#1-description)
 - [2. Current Support Platform](#2-current-support-platform)
-- [3. Pretrained Model](#3-pretrained-model)
-- [4. Convert to RKNN](#4-convert-to-rknn)
-- [5. Python Verification](#5-python-verification)
-- [6. Android Demo](#6-android-demo)
-- [7. Linux Demo](#7-linux-demo)
-- [8. Expected Results](#8-expected-results)
-- [9. Board Validation](#9-board-validation)
+- [3. Directory Structure](#3-directory-structure)
+- [4. Pretrained Model](#4-pretrained-model)
+- [5. Environment](#5-environment)
+- [6. Export and Convert](#6-export-and-convert)
+- [7. Android Deployment](#7-android-deployment)
+- [8. One-command Image Generation](#8-one-command-image-generation)
+- [9. Validation Results](#9-validation-results)
 - [10. Reports](#10-reports)
 - [11. Limitations](#11-limitations)
 
 ## 1. Description
 
-This example deploys Stable Diffusion 1.5 with LCM-LoRA to RK3588 using RKNN-Toolkit2.
-
-The deployment is split into CPU and NPU components:
+The pipeline is split between the CPU and RK3588 NPU:
 
 | Component | Runtime |
 | --- | --- |
-| Tokenizer and text encoder | CPU |
-| UNet denoiser | RK3588 NPU |
-| VAE decoder | RK3588 NPU or CPU fallback during validation |
-| Scheduler, CFG and latent update | CPU |
+| Tokenizer | Windows Python during the current demo stage |
+| Text Encoder | RK3588 NPU through RKNN |
+| UNet denoiser | RK3588 NPU through RKNN |
+| VAE decoder | RK3588 NPU through RKNN |
+| LCM scheduler and latent update | Android C++ CPU |
 
-The first version uses a fixed 512x512 input, batch size 1 and 4 or 8 inference steps.
+The default configuration uses batch size 1, 512×512 resolution, FP RKNN models and four LCM steps.
 
 ## 2. Current Support Platform
 
-| Platform | Status | Notes |
-| --- | --- | --- |
-| RK3588 Linux aarch64 | Planned | Requires RKNN-Toolkit2 and RKNPU2 runtime |
-| RK3588 Android arm64-v8a | Planned | Requires compatible Android NDK and runtime libraries |
+| Platform | Status |
+| --- | --- |
+| RK3588 Android arm64-v8a | Tested |
+| RK3588 Linux aarch64 | Model conversion tested; demo packaging pending |
 
-## 3. Pretrained Model
+## 3. Directory Structure
 
-The first baseline uses Stable Diffusion 1.5 with the official LCM-LoRA weights:
-
-- Base model: `runwayml/stable-diffusion-v1-5`
-- LCM-LoRA: `latent-consistency/lcm-lora-sdv1-5`
-
-Install the baseline dependencies from `requirements-baseline.txt`, then run:
-
-```shell
-cd python
-python baseline.py \
-  --prompt "a photo of a cat" \
-  --seed 42 \
-  --steps 4 \
-  --output ../results/baseline.png
+```text
+cpp/       Android C++ demos and RKNN API header
+python/    baseline, export, conversion and tokenizer scripts
+scripts/   one-command generation scripts
+model/     local ONNX/RKNN artifacts, ignored by Git
+testdata/  local test inputs and outputs, ignored by Git
+results/   generated images, ignored by Git
 ```
 
-The first run downloads the model from Hugging Face. The generated image is the reference output for later ONNX and RKNN comparisons.
+## 4. Pretrained Model
 
-## 4. Convert to RKNN
+The example uses:
 
-Conversion instructions will be added after the ONNX input/output contract is fixed.
+- Base model: Stable Diffusion 1.5
+- LoRA: `latent-consistency/lcm-lora-sdv1-5`
+- Resolution: 512×512
+- Sampling: LCM, four steps
 
-## 5. Python Verification
+Keep the Diffusers model in a local directory such as:
 
-Python verification instructions will be added together with the reference implementation.
+```text
+D:/models/stable-diffusion-v1-5
+D:/models/lcm-lora-sdv1-5
+```
 
-## 6. Android Demo
+Large model files are intentionally excluded from Git.
 
-Android build, deployment and run instructions will be added after the Linux path is validated.
+## 5. Environment
 
-## 7. Linux Demo
+Windows is used for baseline, tokenizer and image conversion. WSL is used for RKNN Toolkit2 conversion.
 
-Linux build, deployment and run instructions will be added after the RKNN Python verification passes.
+The existing local environments are:
 
-## 8. Expected Results
+```text
+Windows: D:/HuaweiMoveData/Users/laiy5/Desktop/stable_diffusion_rknn/.venv
+WSL:     /home/laiy5/rknn312
+```
 
-Performance and output examples will be recorded after board validation.
-
-## 9. Board Validation
-
-Board validation results will be recorded after the RK3588 runtime is available.
-
-## 10. Reports
-
-Conversion, accuracy and performance reports will be added during validation.
-
-## 11. Limitations
-
-The initial example does not support dynamic resolution, batch inference, ControlNet, Img2Img, Inpainting or dynamic LoRA switching.
-# 任意 Prompt 阶段
-
-Text Encoder 的输入是 tokenizer 生成的 `1×77` 个 token id，输出是 UNet 使用的 `1×77×768` prompt embedding。
-
-先在电脑上生成测试输入：
+Activate the WSL conversion environment with:
 
 ```bash
+source /home/laiy5/rknn312/bin/activate
+```
+
+## 6. Export and Convert
+
+Export the Text Encoder to ONNX and prepare a prompt input:
+
+```powershell
+python python/export_text_encoder_onnx.py --output model/text_encoder.onnx
 python python/tokenize_prompt.py "a photo of a dog" --output_dir testdata/prompt
 ```
 
-再将 Text Encoder 转换为 RKNN：
+Convert the Text Encoder to RKNN in WSL:
 
 ```bash
-python python/export_text_encoder_onnx.py --output model/text_encoder.onnx
 python python/convert.py model/text_encoder.onnx rk3588 fp model/text_encoder_fp.rknn
 ```
 
-Android Demo 的输入是 `input_ids.bin`，输出是 `prompt_embeds.bin`。该 embedding 可以直接替换固定 prompt Demo 使用的 `prompt_embeds.bin`。
+UNet and VAE conversion uses the same `python/convert.py` entry point. The generated RKNN files remain in the ignored `model/` directory.
 
-## 一键输入 Prompt 生图
+## 7. Android Deployment
 
-确认板端已经准备好 `stable_diffusion` 目录，并且本地已经编译 `build/text_encoder_rknn_demo`，然后在 PowerShell 执行：
+The board is Android arm64-v8a and must have the RKNN runtime available. The current scripts use Windows ADB:
 
-```powershell
-.\scripts\generate.ps1 "a photo of a dog"
+```text
+C:/Users/laiy5/AppData/Local/Android/Sdk/platform-tools/adb.exe
 ```
 
-默认输出：`results/generated.png`。也可以指定输出文件：
+The board-side directory expected by the one-command script is:
+
+```text
+/data/local/tmp/stable_diffusion/
+```
+
+It must contain:
+
+```text
+fixed_prompt_rknn_demo
+unet_fp.rknn
+vae_decoder_fp.rknn
+fixed_prompt/
+```
+
+The Text Encoder demo also needs `text_encoder_rknn_demo`, `text_encoder_fp.rknn`, `librknnrt.so` and `libc++_shared.so`. The script pushes these files automatically from the local workspace.
+
+## 8. One-command Image Generation
+
+From PowerShell:
 
 ```powershell
-.\scripts\generate.ps1 "a golden robot in a library" -Output results/robot.png
+cd D:\HuaweiMoveData\Users\laiy5\Desktop\Stable_Diffusion_rknn_repo
+powershell -ExecutionPolicy Bypass -File .\scripts\generate.ps1 "a photo of a dog"
 ```
+
+The script performs:
+
+```text
+prompt → tokenizer → Text Encoder → UNet → scheduler → VAE → PNG
+```
+
+The default output is:
+
+```text
+results/generated.png
+```
+
+Specify another output path with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\generate.ps1 `
+  "a golden robot in a library" `
+  -Output results\robot.png
+```
+
+## 9. Validation Results
+
+| Stage | Result |
+| --- | --- |
+| PyTorch → ONNX UNet | max error about `7.4e-6` |
+| PyTorch → ONNX VAE | max error about `7.3e-5` |
+| VAE board validation | completed |
+| UNet board validation | completed |
+| Text Encoder board validation | mean error about `0.00846` after INT32 input fix |
+| Fixed prompt board generation | completed |
+| Arbitrary prompt board generation | completed |
+
+## 10. Reports
+
+- [PITFALLS_REPORT.md](PITFALLS_REPORT.md): deployment issues and solutions.
+
+## 11. Limitations
+
+The current demo is limited to 512×512, batch size 1, four LCM steps and FP RKNN models. Android performs tokenizer preprocessing on the host through the PowerShell wrapper; a fully native Android tokenizer is a future improvement. INT8 quantization, dynamic resolution, Img2Img, Inpainting, ControlNet and dynamic LoRA switching are not included.
