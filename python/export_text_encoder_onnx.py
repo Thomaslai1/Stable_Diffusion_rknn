@@ -13,7 +13,7 @@ class TextEncoderWrapper(torch.nn.Module):
         self.model = model
 
     def forward(self, input_ids):
-        return self.model(input_ids=input_ids, return_dict=False)[0]
+        return self.model(input_ids=input_ids.to(torch.long), return_dict=False)[0]
 
 
 def main():
@@ -25,7 +25,7 @@ def main():
     model = CLIPTextModel.from_pretrained(args.model_dir, torch_dtype=torch.float32)
     model.eval()
     wrapper = TextEncoderWrapper(model)
-    input_ids = torch.zeros((1, 77), dtype=torch.int64)
+    input_ids = torch.zeros((1, 77), dtype=torch.int32)
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
     with torch.no_grad():

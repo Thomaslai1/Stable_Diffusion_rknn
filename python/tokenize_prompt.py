@@ -20,7 +20,7 @@ def main():
         truncation=True,
         max_length=tokenizer.model_max_length,
         return_tensors="np",
-    )["input_ids"].astype(np.int64)
+    )["input_ids"].astype(np.int32)
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     np.save(output_dir / "input_ids.npy", input_ids)

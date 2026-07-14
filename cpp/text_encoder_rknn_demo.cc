@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
   try {
     const auto model = ReadBytes(argv[1]);
     const auto ids = ReadBytes(argv[2]);
-    if (ids.size() != 77 * sizeof(int64_t)) throw std::runtime_error("input_ids must contain 77 int64 values");
+    if (ids.size() != 77 * sizeof(int32_t)) throw std::runtime_error("input_ids must contain 77 int32 values");
     rknn_context context = 0;
     if (rknn_init(&context, const_cast<unsigned char*>(model.data()), model.size(), 0, nullptr) < 0) {
       throw std::runtime_error("text encoder init failed");
@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
     input.buf = const_cast<unsigned char*>(ids.data());
     input.size = ids.size();
     input.pass_through = 1;
-    input.type = RKNN_TENSOR_INT64;
+    input.type = RKNN_TENSOR_INT32;
     input.fmt = RKNN_TENSOR_UNDEFINED;
     if (rknn_inputs_set(context, 1, &input) < 0) throw std::runtime_error("text encoder input failed");
     if (rknn_run(context, nullptr) < 0) throw std::runtime_error("text encoder run failed");
