@@ -170,7 +170,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\generate.ps1 `
 | 4 | 22.76 秒 | 11.21 秒 | 通过 |
 | 6 | 34.66 秒 | 11.44 秒 | 通过 |
 
-6 步已经完成板端运行。8 步耗时和图片质量对比仍待测试。
+6 步和 8 步已经完成板端运行。8 步 UNet 耗时约 45.57 秒，VAE 耗时约 10.02 秒。本次板端运行使用的旧可执行文件仍打印了过时的 `UNet 4 steps` 标签，但日志确认实际完成了 8 步；源码中的标签已经修复，Demo 也已重新编译。
 
 ## Validation results
 

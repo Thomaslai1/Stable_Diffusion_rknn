@@ -170,7 +170,7 @@ Initial RK3588 board timing with the FP16 models and the same prompt/seed:
 | 4 | 22.76 s | 11.21 s | Passed |
 | 6 | 34.66 s | 11.44 s | Passed |
 
-The 6-step run completed successfully. The 8-step timing and image comparison are still pending.
+The 6-step and 8-step runs completed successfully. The 8-step UNet timing was about 45.57 s and VAE timing was about 10.02 s. The current board executable used for that run printed a stale `UNet 4 steps` label, although the log confirmed all eight steps completed; the label has been fixed in source and the demo has been rebuilt.
 
 ## Validation results
 
