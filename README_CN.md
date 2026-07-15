@@ -163,6 +163,15 @@ powershell -ExecutionPolicy Bypass -File .\scripts\generate.ps1 `
 
 三种配置的初始 latent 文件均为 65,536 B，对应 `1×4×64×64` 的 FLOAT32。4、6、8 步的完整板端图片质量和耗时对比仍待测试。
 
+在相同 prompt、seed 和 FP16 模型下，RK3588 板端初步耗时如下：
+
+| 步数 | UNet | VAE | 状态 |
+| ---: | ---: | ---: | --- |
+| 4 | 22.76 秒 | 11.21 秒 | 通过 |
+| 6 | 34.66 秒 | 11.44 秒 | 通过 |
+
+6 步已经完成板端运行。8 步耗时和图片质量对比仍待测试。
+
 ## Validation results
 
 | 项目 | 结果 |

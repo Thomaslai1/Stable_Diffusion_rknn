@@ -163,6 +163,15 @@ Scheduler input generation was checked with seed `42`:
 
 The initial latent file is 65,536 B for all configurations (`1×4×64×64` FLOAT32). Full board-side image quality and timing comparisons for 4, 6 and 8 steps are still pending.
 
+Initial RK3588 board timing with the FP16 models and the same prompt/seed:
+
+| Steps | UNet | VAE | Status |
+| ---: | ---: | ---: | --- |
+| 4 | 22.76 s | 11.21 s | Passed |
+| 6 | 34.66 s | 11.44 s | Passed |
+
+The 6-step run completed successfully. The 8-step timing and image comparison are still pending.
+
 ## Validation results
 
 | Item | Result |

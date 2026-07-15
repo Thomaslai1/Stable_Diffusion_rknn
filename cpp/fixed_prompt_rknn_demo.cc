@@ -163,7 +163,7 @@ int main(int argc, char** argv) {
       std::cout << "step " << (step + 1) << "/" << steps << " completed\n";
     }
     const auto unet_end = std::chrono::steady_clock::now();
-    std::cout << "UNet 4 steps: " << std::chrono::duration<double, std::milli>(unet_end - unet_start).count() << " ms\n";
+    std::cout << "UNet " << steps << " steps: " << std::chrono::duration<double, std::milli>(unet_end - unet_start).count() << " ms\n";
 
     const auto vae_start = std::chrono::steady_clock::now();
     const auto image = RunVae(vae, latents);
