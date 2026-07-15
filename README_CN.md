@@ -153,6 +153,16 @@ powershell -ExecutionPolicy Bypass -File .\scripts\generate.ps1 `
 
 当前 Text Encoder 板端实测耗时约为 46–78 ms。该数据还没有包含多核和 INT8 的正式对比。
 
+使用 seed `42` 对 Scheduler 输入进行了 4、6、8 步检查：
+
+| 步数 | `timesteps.bin` | `scheduler_coeffs.bin` | 噪声文件数 | 状态 |
+| ---: | ---: | ---: | ---: | --- |
+| 4 | 16 B | 96 B | 3 | 通过 |
+| 6 | 24 B | 144 B | 5 | 通过 |
+| 8 | 32 B | 192 B | 7 | 通过 |
+
+三种配置的初始 latent 文件均为 65,536 B，对应 `1×4×64×64` 的 FLOAT32。4、6、8 步的完整板端图片质量和耗时对比仍待测试。
+
 ## Validation results
 
 | 项目 | 结果 |

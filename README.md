@@ -153,6 +153,16 @@ The current implementation is a functional baseline. Text Encoder timing has bee
 
 The measured Text Encoder board inference time is about 46–78 ms in the current test. Inference time does not yet include a formal multi-core and INT8 comparison.
 
+Scheduler input generation was checked with seed `42`:
+
+| Steps | `timesteps.bin` | `scheduler_coeffs.bin` | Noise files | Status |
+| ---: | ---: | ---: | ---: | --- |
+| 4 | 16 B | 96 B | 3 | Passed |
+| 6 | 24 B | 144 B | 5 | Passed |
+| 8 | 32 B | 192 B | 7 | Passed |
+
+The initial latent file is 65,536 B for all configurations (`1×4×64×64` FLOAT32). Full board-side image quality and timing comparisons for 4, 6 and 8 steps are still pending.
+
 ## Validation results
 
 | Item | Result |
