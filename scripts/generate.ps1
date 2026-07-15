@@ -20,6 +20,7 @@ if (-not (Test-Path $Adb)) { throw "找不到 adb: $Adb" }
 if (-not (Test-Path $Python)) { throw "找不到 Python 虚拟环境: $Python" }
 if (-not (Test-Path (Join-Path $Repo "model\text_encoder_fp.rknn"))) { throw "找不到 model\text_encoder_fp.rknn" }
 if (-not (Test-Path (Join-Path $Repo "build\text_encoder_rknn_demo"))) { throw "找不到 build\text_encoder_rknn_demo，请先编译 Android Demo" }
+if (-not (Test-Path (Join-Path $Repo "build\fixed_prompt_rknn_demo"))) { throw "找不到 build\fixed_prompt_rknn_demo，请先编译 Android Demo" }
 
 New-Item -ItemType Directory -Force $InputDir | Out-Null
 New-Item -ItemType Directory -Force (Split-Path $OutputPath) | Out-Null
@@ -33,6 +34,8 @@ New-Item -ItemType Directory -Force (Split-Path $OutputPath) | Out-Null
 & $Adb push (Join-Path $Standalone "cpp\third_party\libc++_shared.so") "$TextBoardDir/libc++_shared.so"
 & $Adb shell "chmod 755 $TextBoardDir/text_encoder_rknn_demo"
 & $Adb shell "LD_LIBRARY_PATH=$TextBoardDir $TextBoardDir/text_encoder_rknn_demo $TextBoardDir/text_encoder_fp.rknn $TextBoardDir/input_ids.bin $TextBoardDir/prompt_embeds.bin"
+& $Adb push (Join-Path $Repo "build\fixed_prompt_rknn_demo") "$BoardDir/fixed_prompt_rknn_demo"
+& $Adb shell "chmod 755 $BoardDir/fixed_prompt_rknn_demo"
 & $Adb shell "LD_LIBRARY_PATH=$BoardDir $BoardDir/fixed_prompt_rknn_demo $BoardDir/unet_fp.rknn $BoardDir/vae_decoder_fp.rknn $BoardDir/fixed_prompt $TextBoardDir/prompt_embeds.bin"
 & $Adb pull "$BoardDir/fixed_prompt/board_image.ppm" $TempOutput
 

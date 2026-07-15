@@ -33,9 +33,9 @@
 本项目验证使用的本地环境如下：
 
 ```text
-Windows Python: D:/HuaweiMoveData/Users/laiy5/Desktop/stable_diffusion_rknn/.venv
-WSL RKNN:       /home/laiy5/rknn312
-Android NDK:    C:/Users/laiy5/AppData/Local/Android/Sdk/ndk/19.2.5345600
+Windows Python: <project-root>/.venv
+WSL RKNN:       <wsl-home>/rknn312
+Android NDK:    <android-sdk>/ndk/19.2.5345600
 ```
 
 ## Model support
@@ -48,8 +48,8 @@ Android NDK:    C:/Users/laiy5/AppData/Local/Android/Sdk/ndk/19.2.5345600
 由于模型文件较大，本仓库不包含模型权重。请将 Diffusers 基础模型和 LCM-LoRA 放在本地目录，例如：
 
 ```text
-D:/models/stable-diffusion-v1-5
-D:/models/lcm-lora-sdv1-5
+<models-root>/stable-diffusion-v1-5
+<models-root>/lcm-lora-sdv1-5
 ```
 
 ## Directory structure
@@ -68,8 +68,8 @@ results/   生成图片，Git 忽略
 激活 WSL 中的 RKNN 环境：
 
 ```sh
-source /home/laiy5/rknn312/bin/activate
-cd /mnt/d/HuaweiMoveData/Users/laiy5/Desktop/Stable_Diffusion_rknn_repo
+source <wsl-home>/rknn312/bin/activate
+cd <project-root>
 ```
 
 导出 Text Encoder 并转换为 RKNN：
@@ -91,7 +91,7 @@ python python/convert.py model/vae_decoder.onnx rk3588 fp model/vae_decoder_fp.r
 编译 Android Demo 时，请根据本机环境设置 Android NDK 路径，并使用 Android clang 工具链：
 
 ```powershell
-$clang = "C:\Users\laiy5\AppData\Local\Android\Sdk\ndk\19.2.5345600\toolchains\llvm\prebuilt\windows-x86_64\bin\aarch64-linux-android21-clang++.cmd"
+$clang = "<android-sdk>\ndk\19.2.5345600\toolchains\llvm\prebuilt\windows-x86_64\bin\aarch64-linux-android21-clang++.cmd"
 New-Item -ItemType Directory -Force build | Out-Null
 ```
 
@@ -117,7 +117,7 @@ vae_rknn_demo
 该目录需要包含 UNet、VAE 以及 `fixed_prompt_rknn_demo` 所需的 Scheduler 测试文件。一键脚本会自动上传 Text Encoder 模型和运行库，并执行完整流程。
 
 ```powershell
-cd D:\HuaweiMoveData\Users\laiy5\Desktop\Stable_Diffusion_rknn_repo
+cd <project-root>
 powershell -ExecutionPolicy Bypass -File .\scripts\generate.ps1 "a photo of a dog"
 ```
 
@@ -133,7 +133,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\generate.ps1 `
 
 ## Model performance benchmark
 
-当前实现首先保证功能正确，详细性能数据仍在测试中。
+当前实现首先保证功能正确。Text Encoder 的板端耗时已经测量；由于当前脚本每次运行都会上传模型文件，完整端到端耗时仍在补充测试。
 
 | 组件 | 配置 | 状态 |
 | --- | --- | --- |
@@ -142,7 +142,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\generate.ps1 `
 | VAE 解码器 | RKNN FP16，输出 512×512 | 已完成板端验证 |
 | 端到端生图 | 512×512，4 步 LCM | 已完成板端验证 |
 
-当前还没有完成多核和 INT8 的正式性能对比，后续 profiling 后补充。
+当前 Text Encoder 板端实测耗时约为 46–78 ms。该数据还没有包含多核和 INT8 的正式对比；当前脚本的 ADB 上传耗时也不代表实际部署后的应用耗时。
 
 ## Validation results
 
@@ -153,7 +153,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\generate.ps1 `
 | VAE RKNN 板端推理 | 通过 |
 | UNet RKNN 板端推理 | 通过 |
 | Text Encoder 板端推理 | 通过；修复 INT32 输入后平均误差约 `0.00846` |
-| 任意 prompt 生图 | 通过 |
+| 任意 prompt Text Encoder 输出 | 通过；不同 prompt 会生成不同 embedding |
+| 任意 prompt 端到端生图 | 单 prompt 流程通过；双 prompt 回归测试待完成 |
 
 ## Reports
 

@@ -33,9 +33,9 @@ This example relies on `RKNN-Toolkit2` for model conversion and the Android NDK 
 The tested local environments are:
 
 ```text
-Windows Python: D:/HuaweiMoveData/Users/laiy5/Desktop/stable_diffusion_rknn/.venv
-WSL RKNN:       /home/laiy5/rknn312
-Android NDK:    C:/Users/laiy5/AppData/Local/Android/Sdk/ndk/19.2.5345600
+Windows Python: <project-root>/.venv
+WSL RKNN:       <wsl-home>/rknn312
+Android NDK:    <android-sdk>/ndk/19.2.5345600
 ```
 
 ## Model support
@@ -48,8 +48,8 @@ Android NDK:    C:/Users/laiy5/AppData/Local/Android/Sdk/ndk/19.2.5345600
 The model files are not included in this repository because of their size. Keep the Diffusers model and LCM-LoRA in local directories such as:
 
 ```text
-D:/models/stable-diffusion-v1-5
-D:/models/lcm-lora-sdv1-5
+<models-root>/stable-diffusion-v1-5
+<models-root>/lcm-lora-sdv1-5
 ```
 
 ## Directory structure
@@ -68,8 +68,8 @@ results/   generated images, ignored by Git
 Activate the WSL RKNN environment:
 
 ```sh
-source /home/laiy5/rknn312/bin/activate
-cd /mnt/d/HuaweiMoveData/Users/laiy5/Desktop/Stable_Diffusion_rknn_repo
+source <wsl-home>/rknn312/bin/activate
+cd <project-root>
 ```
 
 Export the Text Encoder and convert it to RKNN:
@@ -91,7 +91,7 @@ python python/convert.py model/vae_decoder.onnx rk3588 fp model/vae_decoder_fp.r
 For Android development boards, set the Android NDK path and compile the C++ demos with the Android clang toolchain:
 
 ```powershell
-$clang = "C:\Users\laiy5\AppData\Local\Android\Sdk\ndk\19.2.5345600\toolchains\llvm\prebuilt\windows-x86_64\bin\aarch64-linux-android21-clang++.cmd"
+$clang = "<android-sdk>\ndk\19.2.5345600\toolchains\llvm\prebuilt\windows-x86_64\bin\aarch64-linux-android21-clang++.cmd"
 New-Item -ItemType Directory -Force build | Out-Null
 ```
 
@@ -117,7 +117,7 @@ The board-side directory is:
 It must contain the UNet, VAE and scheduler artifacts used by `fixed_prompt_rknn_demo`. The one-command script automatically pushes the Text Encoder model and runtime libraries, then runs the complete pipeline.
 
 ```powershell
-cd D:\HuaweiMoveData\Users\laiy5\Desktop\Stable_Diffusion_rknn_repo
+cd <project-root>
 powershell -ExecutionPolicy Bypass -File .\scripts\generate.ps1 "a photo of a dog"
 ```
 
@@ -133,7 +133,7 @@ The output image is saved to `results/generated.png` by default.
 
 ## Model performance benchmark
 
-The current implementation is a functional baseline. Detailed performance benchmarking is still pending.
+The current implementation is a functional baseline. Text Encoder timing has been measured; full end-to-end timing is still being collected because the current script uploads the model files for each run.
 
 | Component | Configuration | Status |
 | --- | --- | --- |
@@ -142,7 +142,7 @@ The current implementation is a functional baseline. Detailed performance benchm
 | VAE decoder | RKNN FP16, 512×512 output | Board validated |
 | End-to-end generation | 512×512, four LCM steps | Board validated |
 
-Inference time does not yet include a formal multi-core and INT8 comparison. Such results will be added after profiling.
+The measured Text Encoder board inference time is about 46–78 ms in the current test. Inference time does not yet include a formal multi-core and INT8 comparison, and the host-side ADB upload time is not representative of a deployed application.
 
 ## Validation results
 
@@ -153,7 +153,8 @@ Inference time does not yet include a formal multi-core and INT8 comparison. Suc
 | VAE RKNN board inference | Passed |
 | UNet RKNN board inference | Passed |
 | Text Encoder board inference | Passed; mean error about `0.00846` after INT32 input fix |
-| Arbitrary prompt generation | Passed |
+| Arbitrary prompt Text Encoder output | Passed; different prompts produce different embeddings |
+| Arbitrary prompt end-to-end generation | Single-prompt path passed; two-prompt regression test pending |
 
 ## Reports
 
