@@ -131,6 +131,15 @@ powershell -ExecutionPolicy Bypass -File .\scripts\generate.ps1 `
 
 默认输出文件为 `results/generated.png`。
 
+可以直接调整随机种子和 LCM 步数，不需要修改代码：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\generate.ps1 `
+  "a photo of a dog" -Seed 123 -Steps 6 -Output results\dog_6steps.png
+```
+
+当前支持 `4`、`6` 和 `8` 步。
+
 ## Model performance benchmark
 
 当前实现首先保证功能正确。Text Encoder 的板端耗时已经测量；模型文件只在首次运行时上传，后续运行直接复用。

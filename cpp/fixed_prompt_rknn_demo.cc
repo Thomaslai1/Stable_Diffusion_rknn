@@ -129,8 +129,10 @@ int main(int argc, char** argv) {
     const std::string dir = argv[3];
     const auto prompt = ReadValues<float>(argc == 5 ? argv[4] : (dir + "/prompt_embeds.bin").c_str(), 77 * 768);
     auto latents = ReadValues<float>((dir + "/initial_latents.bin").c_str(), 4 * 64 * 64);
-    const auto timesteps = ReadValues<float>((dir + "/timesteps.bin").c_str(), 4);
-    const auto coeffs = ReadValues<float>((dir + "/scheduler_coeffs.bin").c_str(), 4 * 6);
+    const auto timestep_bytes = ReadBytes((dir + "/timesteps.bin").c_str());
+    const size_t steps = timestep_bytes.size() / sizeof(float);
+    const auto timesteps = ReadValues<float>((dir + "/timesteps.bin").c_str(), steps);
+    const auto coeffs = ReadValues<float>((dir + "/scheduler_coeffs.bin").c_str(), steps * 6);
     const auto model_unet = ReadBytes(argv[1]);
     const auto model_vae = ReadBytes(argv[2]);
     rknn_context unet = 0;
@@ -139,7 +141,7 @@ int main(int argc, char** argv) {
     if (rknn_init(&vae, const_cast<unsigned char*>(model_vae.data()), model_vae.size(), 0, nullptr) < 0) throw std::runtime_error("VAE init failed");
 
     const auto unet_start = std::chrono::steady_clock::now();
-    for (size_t step = 0; step < 4; ++step) {
+    for (size_t step = 0; step < steps; ++step) {
       const auto noise_pred = RunUnet(unet, latents, {timesteps[step]}, prompt);
       const float alpha = coeffs[step * 6 + 0];
       const float beta = coeffs[step * 6 + 1];
@@ -152,13 +154,13 @@ int main(int argc, char** argv) {
         const float predicted = (latents[i] - beta * noise_pred[i]) / alpha;
         denoised[i] = c_out * predicted + c_skip * latents[i];
       }
-      if (step < 3) {
+      if (step + 1 < steps) {
         const auto noise = ReadValues<float>((dir + "/scheduler_noise_" + std::to_string(step) + ".bin").c_str(), latents.size());
         for (size_t i = 0; i < latents.size(); ++i) latents[i] = alpha_prev * denoised[i] + beta_prev * noise[i];
       } else {
         latents = denoised;
       }
-      std::cout << "step " << (step + 1) << "/4 completed\n";
+      std::cout << "step " << (step + 1) << "/" << steps << " completed\n";
     }
     const auto unet_end = std::chrono::steady_clock::now();
     std::cout << "UNet 4 steps: " << std::chrono::duration<double, std::milli>(unet_end - unet_start).count() << " ms\n";

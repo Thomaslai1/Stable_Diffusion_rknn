@@ -2,6 +2,9 @@ param(
     [Parameter(Mandatory = $true, Position = 0)]
     [string]$Prompt,
     [string]$Output = "results\generated.png",
+    [int]$Seed = 42,
+    [ValidateSet(4, 6, 8)]
+    [int]$Steps = 4,
     [string]$Adb = "C:\Users\laiy5\AppData\Local\Android\Sdk\platform-tools\adb.exe",
     [string]$BoardDir = "/data/local/tmp/stable_diffusion",
     [string]$TextBoardDir = "/data/local/tmp/stable_diffusion_text"
@@ -12,6 +15,7 @@ $Repo = Split-Path -Parent $PSScriptRoot
 $Standalone = "D:\HuaweiMoveData\Users\laiy5\Desktop\stable_diffusion_rknn"
 $Python = Join-Path $Standalone ".venv\Scripts\python.exe"
 $Tokenize = Join-Path $Repo "python\tokenize_prompt.py"
+$Scheduler = Join-Path $Repo "python\export_scheduler_inputs.py"
 $InputDir = Join-Path $Repo "testdata\prompt"
 $OutputPath = Join-Path $Repo $Output
 $TempOutput = Join-Path $Repo "testdata\prompt\board_image.ppm"
@@ -33,9 +37,16 @@ function Push-IfMissing([string]$LocalPath, [string]$RemotePath) {
 }
 
 & $Python $Tokenize $Prompt --output_dir $InputDir
+& $Python $Scheduler --output_dir $InputDir --seed $Seed --steps $Steps
 & $Adb shell "mkdir -p $TextBoardDir"
 Push-IfMissing (Join-Path $Repo "model\text_encoder_fp.rknn") "$TextBoardDir/text_encoder_fp.rknn"
 & $Adb push (Join-Path $InputDir "input_ids.bin") "$TextBoardDir/input_ids.bin"
+& $Adb push (Join-Path $InputDir "initial_latents.bin") "$BoardDir/fixed_prompt/initial_latents.bin"
+& $Adb push (Join-Path $InputDir "timesteps.bin") "$BoardDir/fixed_prompt/timesteps.bin"
+& $Adb push (Join-Path $InputDir "scheduler_coeffs.bin") "$BoardDir/fixed_prompt/scheduler_coeffs.bin"
+for ($i = 0; $i -lt ($Steps - 1); $i++) {
+    & $Adb push (Join-Path $InputDir "scheduler_noise_$i.bin") "$BoardDir/fixed_prompt/scheduler_noise_$i.bin"
+}
 & $Adb push (Join-Path $Repo "build\text_encoder_rknn_demo") "$TextBoardDir/text_encoder_rknn_demo"
 Push-IfMissing (Join-Path $Standalone "cpp\third_party\librknnrt.so") "$TextBoardDir/librknnrt.so"
 Push-IfMissing (Join-Path $Standalone "cpp\third_party\libc++_shared.so") "$TextBoardDir/libc++_shared.so"

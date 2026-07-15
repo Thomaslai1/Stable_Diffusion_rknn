@@ -131,6 +131,15 @@ powershell -ExecutionPolicy Bypass -File .\scripts\generate.ps1 `
 
 The output image is saved to `results/generated.png` by default.
 
+The seed and LCM step count can be changed without editing code:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\generate.ps1 `
+  "a photo of a dog" -Seed 123 -Steps 6 -Output results\dog_6steps.png
+```
+
+Supported step counts are `4`, `6` and `8`.
+
 ## Model performance benchmark
 
 The current implementation is a functional baseline. Text Encoder timing has been measured; model files are uploaded only on the first run and reused on subsequent runs.
