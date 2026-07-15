@@ -121,8 +121,8 @@ std::vector<float> RunVae(rknn_context context, const std::vector<float>& latent
 }  // namespace
 
 int main(int argc, char** argv) {
-  if (argc != 4 && argc != 5) {
-    std::cerr << "usage: fixed_prompt_rknn_demo <unet.rknn> <vae.rknn> <artifact_dir> [prompt_embeds.bin]\n";
+  if (argc < 4 || argc > 6) {
+    std::cerr << "usage: fixed_prompt_rknn_demo <unet.rknn> <vae.rknn> <artifact_dir> [prompt_embeds.bin] [core_mask]\n";
     return 2;
   }
   try {
@@ -139,6 +139,12 @@ int main(int argc, char** argv) {
     rknn_context vae = 0;
     if (rknn_init(&unet, const_cast<unsigned char*>(model_unet.data()), model_unet.size(), 0, nullptr) < 0) throw std::runtime_error("UNet init failed");
     if (rknn_init(&vae, const_cast<unsigned char*>(model_vae.data()), model_vae.size(), 0, nullptr) < 0) throw std::runtime_error("VAE init failed");
+    if (argc == 6) {
+      const auto core_mask = static_cast<rknn_core_mask>(std::stoi(argv[5]));
+      if (rknn_set_core_mask(unet, core_mask) < 0) throw std::runtime_error("UNet core mask failed");
+      if (rknn_set_core_mask(vae, core_mask) < 0) throw std::runtime_error("VAE core mask failed");
+      std::cout << "core mask: " << argv[5] << "\n";
+    }
 
     const auto unet_start = std::chrono::steady_clock::now();
     for (size_t step = 0; step < steps; ++step) {
