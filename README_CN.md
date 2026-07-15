@@ -114,7 +114,7 @@ vae_rknn_demo
 /data/local/tmp/stable_diffusion/
 ```
 
-该目录需要包含 UNet、VAE 以及 `fixed_prompt_rknn_demo` 所需的 Scheduler 测试文件。一键脚本会自动上传 Text Encoder 模型和运行库，并执行完整流程。
+该目录需要包含 UNet、VAE 以及 `fixed_prompt_rknn_demo` 所需的 Scheduler 测试文件。一键脚本首次运行时上传 Text Encoder 模型、运行库和 Demo，后续运行直接复用板端文件。
 
 ```powershell
 cd <project-root>
@@ -133,7 +133,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\generate.ps1 `
 
 ## Model performance benchmark
 
-当前实现首先保证功能正确。Text Encoder 的板端耗时已经测量；由于当前脚本每次运行都会上传模型文件，完整端到端耗时仍在补充测试。
+当前实现首先保证功能正确。Text Encoder 的板端耗时已经测量；模型文件只在首次运行时上传，后续运行直接复用。
 
 | 组件 | 配置 | 状态 |
 | --- | --- | --- |
@@ -142,7 +142,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\generate.ps1 `
 | VAE 解码器 | RKNN FP16，输出 512×512 | 已完成板端验证 |
 | 端到端生图 | 512×512，4 步 LCM | 已完成板端验证 |
 
-当前 Text Encoder 板端实测耗时约为 46–78 ms。该数据还没有包含多核和 INT8 的正式对比；当前脚本的 ADB 上传耗时也不代表实际部署后的应用耗时。
+当前 Text Encoder 板端实测耗时约为 46–78 ms。该数据还没有包含多核和 INT8 的正式对比。
 
 ## Validation results
 

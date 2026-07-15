@@ -133,7 +133,7 @@ The output image is saved to `results/generated.png` by default.
 
 ## Model performance benchmark
 
-The current implementation is a functional baseline. Text Encoder timing has been measured; full end-to-end timing is still being collected because the current script uploads the model files for each run.
+The current implementation is a functional baseline. Text Encoder timing has been measured; model files are uploaded only on the first run and reused on subsequent runs.
 
 | Component | Configuration | Status |
 | --- | --- | --- |
@@ -142,7 +142,7 @@ The current implementation is a functional baseline. Text Encoder timing has bee
 | VAE decoder | RKNN FP16, 512×512 output | Board validated |
 | End-to-end generation | 512×512, four LCM steps | Board validated |
 
-The measured Text Encoder board inference time is about 46–78 ms in the current test. Inference time does not yet include a formal multi-core and INT8 comparison, and the host-side ADB upload time is not representative of a deployed application.
+The measured Text Encoder board inference time is about 46–78 ms in the current test. Inference time does not yet include a formal multi-core and INT8 comparison.
 
 ## Validation results
 

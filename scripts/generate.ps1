@@ -25,13 +25,20 @@ if (-not (Test-Path (Join-Path $Repo "build\fixed_prompt_rknn_demo"))) { throw "
 New-Item -ItemType Directory -Force $InputDir | Out-Null
 New-Item -ItemType Directory -Force (Split-Path $OutputPath) | Out-Null
 
+function Push-IfMissing([string]$LocalPath, [string]$RemotePath) {
+    & $Adb shell "test -f $RemotePath"
+    if ($LASTEXITCODE -ne 0) {
+        & $Adb push $LocalPath $RemotePath
+    }
+}
+
 & $Python $Tokenize $Prompt --output_dir $InputDir
 & $Adb shell "mkdir -p $TextBoardDir"
-& $Adb push (Join-Path $Repo "model\text_encoder_fp.rknn") "$TextBoardDir/text_encoder_fp.rknn"
+Push-IfMissing (Join-Path $Repo "model\text_encoder_fp.rknn") "$TextBoardDir/text_encoder_fp.rknn"
 & $Adb push (Join-Path $InputDir "input_ids.bin") "$TextBoardDir/input_ids.bin"
 & $Adb push (Join-Path $Repo "build\text_encoder_rknn_demo") "$TextBoardDir/text_encoder_rknn_demo"
-& $Adb push (Join-Path $Standalone "cpp\third_party\librknnrt.so") "$TextBoardDir/librknnrt.so"
-& $Adb push (Join-Path $Standalone "cpp\third_party\libc++_shared.so") "$TextBoardDir/libc++_shared.so"
+Push-IfMissing (Join-Path $Standalone "cpp\third_party\librknnrt.so") "$TextBoardDir/librknnrt.so"
+Push-IfMissing (Join-Path $Standalone "cpp\third_party\libc++_shared.so") "$TextBoardDir/libc++_shared.so"
 & $Adb shell "chmod 755 $TextBoardDir/text_encoder_rknn_demo"
 & $Adb shell "LD_LIBRARY_PATH=$TextBoardDir $TextBoardDir/text_encoder_rknn_demo $TextBoardDir/text_encoder_fp.rknn $TextBoardDir/input_ids.bin $TextBoardDir/prompt_embeds.bin"
 & $Adb push (Join-Path $Repo "build\fixed_prompt_rknn_demo") "$BoardDir/fixed_prompt_rknn_demo"
