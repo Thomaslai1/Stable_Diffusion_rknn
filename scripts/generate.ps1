@@ -33,8 +33,7 @@ New-Item -ItemType Directory -Force (Split-Path $OutputPath) | Out-Null
 & $Adb push (Join-Path $Standalone "cpp\third_party\libc++_shared.so") "$TextBoardDir/libc++_shared.so"
 & $Adb shell "chmod 755 $TextBoardDir/text_encoder_rknn_demo"
 & $Adb shell "LD_LIBRARY_PATH=$TextBoardDir $TextBoardDir/text_encoder_rknn_demo $TextBoardDir/text_encoder_fp.rknn $TextBoardDir/input_ids.bin $TextBoardDir/prompt_embeds.bin"
-& $Adb shell "cp $TextBoardDir/prompt_embeds.bin $BoardDir/fixed_prompt/prompt_embeds.bin"
-& $Adb shell "LD_LIBRARY_PATH=$BoardDir $BoardDir/fixed_prompt_rknn_demo $BoardDir/unet_fp.rknn $BoardDir/vae_decoder_fp.rknn $BoardDir/fixed_prompt"
+& $Adb shell "LD_LIBRARY_PATH=$BoardDir $BoardDir/fixed_prompt_rknn_demo $BoardDir/unet_fp.rknn $BoardDir/vae_decoder_fp.rknn $BoardDir/fixed_prompt $TextBoardDir/prompt_embeds.bin"
 & $Adb pull "$BoardDir/fixed_prompt/board_image.ppm" $TempOutput
 
 & $Python -c "from PIL import Image; Image.open(r'$TempOutput').save(r'$OutputPath')"

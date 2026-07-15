@@ -134,7 +134,7 @@ cd D:\HuaweiMoveData\Users\laiy5\Desktop\Stable_Diffusion_rknn_repo
 powershell -ExecutionPolicy Bypass -File .\scripts\generate.ps1 "a photo of a dog"
 ```
 
-The script performs:
+The script passes the current prompt embedding explicitly to the C++ demo, so an older prompt embedding cannot be reused accidentally. It performs:
 
 ```text
 prompt → tokenizer → Text Encoder → UNet → scheduler → VAE → PNG

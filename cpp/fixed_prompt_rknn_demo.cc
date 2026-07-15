@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -120,13 +121,13 @@ std::vector<float> RunVae(rknn_context context, const std::vector<float>& latent
 }  // namespace
 
 int main(int argc, char** argv) {
-  if (argc != 4) {
-    std::cerr << "usage: fixed_prompt_rknn_demo <unet.rknn> <vae.rknn> <artifact_dir>\n";
+  if (argc != 4 && argc != 5) {
+    std::cerr << "usage: fixed_prompt_rknn_demo <unet.rknn> <vae.rknn> <artifact_dir> [prompt_embeds.bin]\n";
     return 2;
   }
   try {
     const std::string dir = argv[3];
-    const auto prompt = ReadValues<float>((dir + "/prompt_embeds.bin").c_str(), 77 * 768);
+    const auto prompt = ReadValues<float>(argc == 5 ? argv[4] : (dir + "/prompt_embeds.bin").c_str(), 77 * 768);
     auto latents = ReadValues<float>((dir + "/initial_latents.bin").c_str(), 4 * 64 * 64);
     const auto timesteps = ReadValues<float>((dir + "/timesteps.bin").c_str(), 4);
     const auto coeffs = ReadValues<float>((dir + "/scheduler_coeffs.bin").c_str(), 4 * 6);
@@ -137,6 +138,7 @@ int main(int argc, char** argv) {
     if (rknn_init(&unet, const_cast<unsigned char*>(model_unet.data()), model_unet.size(), 0, nullptr) < 0) throw std::runtime_error("UNet init failed");
     if (rknn_init(&vae, const_cast<unsigned char*>(model_vae.data()), model_vae.size(), 0, nullptr) < 0) throw std::runtime_error("VAE init failed");
 
+    const auto unet_start = std::chrono::steady_clock::now();
     for (size_t step = 0; step < 4; ++step) {
       const auto noise_pred = RunUnet(unet, latents, {timesteps[step]}, prompt);
       const float alpha = coeffs[step * 6 + 0];
@@ -158,8 +160,13 @@ int main(int argc, char** argv) {
       }
       std::cout << "step " << (step + 1) << "/4 completed\n";
     }
+    const auto unet_end = std::chrono::steady_clock::now();
+    std::cout << "UNet 4 steps: " << std::chrono::duration<double, std::milli>(unet_end - unet_start).count() << " ms\n";
 
+    const auto vae_start = std::chrono::steady_clock::now();
     const auto image = RunVae(vae, latents);
+    const auto vae_end = std::chrono::steady_clock::now();
+    std::cout << "VAE decode: " << std::chrono::duration<double, std::milli>(vae_end - vae_start).count() << " ms\n";
     WritePpm((dir + "/board_image.ppm").c_str(), image.data());
     rknn_destroy(unet);
     rknn_destroy(vae);
